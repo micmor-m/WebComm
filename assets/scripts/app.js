@@ -1,5 +1,7 @@
 const listElement = document.querySelector(".posts");
 const postTemplate = document.getElementById("single-post");
+const form = document.querySelector("#new-post form");
+const fetchButton = document.querySelector("#available-posts button");
 
 function sendHttpRequest(method, url, data) {
   //create a Promise to handle the data from the server
@@ -23,6 +25,12 @@ function sendHttpRequest(method, url, data) {
 }
 
 function fetchPosts() {
+  if (listElement.children.length > 0) {
+    while (listElement.firstChild) {
+      listElement.removeChild(listElement.firstChild);
+    }
+  }
+  console.log(listElement.children.length);
   sendHttpRequest("GET", "https://jsonplaceholder.typicode.com/posts").then(
     (responseData) => {
       const listOfPosts = responseData;
@@ -31,6 +39,7 @@ function fetchPosts() {
         const postEl = document.importNode(postTemplate.content, true);
         postEl.querySelector("h2").textContent = post.title.toUpperCase();
         postEl.querySelector("p").textContent = post.body;
+        postEl.querySelector("li").id = post.id;
         listElement.append(postEl);
       }
     }
@@ -48,5 +57,26 @@ async function createPost(title, content) {
   sendHttpRequest("POST", "https://jsonplaceholder.typicode.com/posts", post);
 }
 
-fetchPosts();
-createPost("DUMMY", "A dummy post!");
+//FECTH posts
+fetchButton.addEventListener("click", fetchPosts);
+
+//ADD new post
+form.addEventListener("submit", (event) => {
+  //prevent default
+  event.preventDefault();
+  const enteredTitle = event.currentTarget.querySelector("#title").value;
+  const enteredContent = event.currentTarget.querySelector("#content").value;
+  createPost(enteredTitle, enteredContent);
+});
+
+listElement.addEventListener("click", (event) => {
+  //take advantage of the event propagation listen event on all list
+  if (event.target.tagName === "BUTTON") {
+    const postId = event.target.closest("li").id;
+    sendHttpRequest(
+      "DELETE",
+      `https://jsonplaceholder.typicode.com/posts/${postId}`
+    );
+  }
+  // event.target.querySelector("");
+});
